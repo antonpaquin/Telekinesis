@@ -1,0 +1,792 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Telekinesis",
+    "description": "Allows for secure script upload and execution over the web",
+    "contact": {
+      "name": "Anton Paquin",
+      "url": "https://github.com/antonpaquin/",
+      "email": "telekinesis@antonpaqu.in"
+    },
+    "license": {
+      "name": "GPL V3",
+      "url": "https://www.gnu.org/licenses/gpl-3.0.en.html"
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "description": "Retrieve the OpenAPI description of the API",
+        "operationId": "describeAPI",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "An OpenAPI-compliant document describing this API"
+          },
+          "500": {
+            "description": "Unknown error retrieving the API specification"
+          }
+        },
+        "security": []
+      }
+    },
+    "/login": {
+      "post": {
+        "description": "Log the user in and receive a session token",
+        "operationId": "login",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "The username of the user to log in"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "The user's password"
+                  }
+                },
+                "example": {
+                  "username": "anton",
+                  "password": "anton"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The user was logged in successfully, and the session cookie should be set to authorize further requests",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Contains the session cookie that should be set to authorize requests",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "session": {
+                      "type": "string",
+                      "description": "The session cookie that should be set to authorize requests"
+                    }
+                  },
+                  "example": {
+                    "session": "37f2af15a39c4c15a39e8ee65e6816ae"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": []
+      }
+    },
+    "/script": {
+      "put": {
+        "description": "Create a new script",
+        "operationId": "createScript",
+        "parameters": [],
+        "requestBody": {
+          "description": "Describe the script to be created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/script_new"
+              },
+              "example": {
+                "script": "echo \"Hello world!\"",
+                "description": "Prints 'Hello world!'",
+                "fork": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The script has been successfully created and can be called by POST /script/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/script"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/script/{script_id}": {
+      "get": {
+        "description": "Retrieve the script with the given id",
+        "operationId": "getScript",
+        "parameters": [
+          {
+            "name": "script_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the script to retrieve",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A document describing the script",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/script"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "patch": {
+        "description": "Update / edit the given script",
+        "operationId": "updateScript",
+        "parameters": [
+          {
+            "name": "script_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the script to change",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The fields to be updated for this script. Allowed: \"script\", \"description\", \"fork\". Any field sent with this document will be updated to its new value.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/script_update"
+              },
+              "example": {
+                "description": "NEW description",
+                "script": "touch \"Hello world.txt\""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A document describing the updated script",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/script"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Remove a given script",
+        "operationId": "deleteScript",
+        "parameters": [
+          {
+            "name": "script_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the script to delete",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The script was successfully deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "post": {
+        "description": "Execute the stored script",
+        "operationId": "scriptExecute",
+        "parameters": [
+          {
+            "name": "script_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the script to run",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The script was executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/script_run"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/scripts": {
+      "get": {
+        "description": "List the available scripts",
+        "operationId": "getScripts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A list of the scripts that are present on the server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/script"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/user": {
+      "put": {
+        "description": "Create a new user",
+        "operationId": "putUser",
+        "parameters": [],
+        "requestBody": {
+          "description": "Describe the user to be added",
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "The username of the user to be added"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "The user's password"
+                  }
+                },
+                "example": {
+                  "username": "sidney",
+                  "password": "hunter2"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The user was added successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/user/{username}": {
+      "get": {
+        "description": "Retrieve a user",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The name of the user to retrieve",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user that was retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "username": {
+                      "type": "string",
+                      "description": "The user's username"
+                    },
+                    "permissions": {
+                      "type": "array",
+                      "description": "The permissions the user is allowed",
+                      "items": {
+                        "type": "string",
+                        "description": "One permission, describing the resource permitted and the type of access allowed"
+                      }
+                    }
+                  },
+                  "example": {
+                    "username": "sidney",
+                    "permissions": [
+                      "script.read.1",
+                      "script.update.1",
+                      "script.destroy.1",
+                      "script.execute.1"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Remove a user",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "description": "The name of the user to delete",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user was removed successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    },
+    "/permission": {
+      "put": {
+        "description": "Apply a new permission to a user",
+        "operationId": "putPermission",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "username",
+                  "permission"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "The username of the user who will receive the permission"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "description": "The permission string to be applied"
+                  }
+                },
+                "example": {
+                  "username": "sidney",
+                  "permission": "script.execute.2"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The permission was applied successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Remove a permission from a user",
+        "operationId": "deletePermission",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "username",
+                  "permission"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "The username of the user to remove the permission from"
+                  },
+                  "permission": {
+                    "type": "string",
+                    "description": "The permission string to be removed"
+                  }
+                },
+                "example": {
+                  "username": "sidney",
+                  "permission": "script.read.2"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The permission was removed successfully"
+          },
+          "400": {
+            "$ref": "#/components/responses/err_params"
+          },
+          "401": {
+            "$ref": "#/components/responses/err_authorization"
+          },
+          "500": {
+            "$ref": "#/components/responses/err_unknown"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "script": {
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "The command that will be run when this script is called"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of what this script will do"
+          },
+          "fork": {
+            "type": "boolean",
+            "description": "Whether the script forks into the background, or blocks until it completes"
+          },
+          "id": {
+            "type": "integer",
+            "description": "The reference ID of the script"
+          },
+          "public_token": {
+            "type": "string",
+            "description": "Session token which allows unauthenticated read and execute for this script, via /script/{id}/{public_token}"
+          }
+        },
+        "example": {
+          "script": "ps -A",
+          "description": "Get running programs",
+          "fork": "False",
+          "id": 23,
+          "public_token": "027fa1e8f7d94077b2d2527ed6786cc6"
+        }
+      },
+      "script_new": {
+        "required": [
+          "script",
+          "fork"
+        ],
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "The command that will be run when this script is called"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of what this script should do"
+          },
+          "fork": {
+            "type": "boolean",
+            "description": "Should this script run in the background or return immediately?"
+          }
+        },
+        "example": {
+          "script": "ps -A",
+          "description": "Get running programs",
+          "fork": "False"
+        }
+      },
+      "script_update": {
+        "properties": {
+          "script": {
+            "type": "string",
+            "description": "The command that will be run when this script is called"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of what this script will do"
+          },
+          "fork": {
+            "type": "boolean",
+            "description": "Whether the script forks into the background, or blocks until it completes"
+          }
+        },
+        "example": {
+          "description": "Calls the \"ps\" script, with the -A flag to select all processes."
+        }
+      },
+      "script_run": {
+        "properties": {
+          "exit_status": {
+            "type": "integer",
+            "description": "The exit status of the command that was run. If \"fork\" is set, this will be empty."
+          },
+          "stdout": {
+            "type": "string",
+            "description": "The output in stdout of the command that was run. If \"fork\" is set, this will be empty."
+          },
+          "stderr": {
+            "type": "string",
+            "description": "The output in stderr of the command that was run. If \"fork\" is set, this will be empty."
+          },
+          "pid": {
+            "type": "integer",
+            "description": "The process ID of the run command."
+          }
+        },
+        "example": {
+          "exit_status": 0,
+          "stdout": "-rw-r--r-- 1 anton anton 18235 Jul  8 21:44 /home/anton/tmp/telekinesis/telekinesis.log",
+          "stderr": "",
+          "pid": 18270
+        }
+      }
+    },
+    "responses": {
+      "err_params": {
+        "description": "There was an error with the arguments passed to this endpoint",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "errors": {
+                  "type": "object",
+                  "description": "An object containing the errors encountered in the arguments"
+                }
+              },
+              "example": {
+                "errors": {
+                  "password": ["required field"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "err_authorization": {
+        "description": "The user was not authorized to access this resource",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "errors": {
+                  "type": "string",
+                  "description": "Describes why this resource may not be accessed"
+                }
+              },
+              "example": {
+                "errors": "Insufficient permission: requires permission script.create"
+              }
+            }
+          }
+        }
+      },
+      "err_unknown": {
+        "description": "There was an unknown error while processing this request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "errors": {
+                  "type": "object",
+                  "description": "An object containing possible error messages"
+                }
+              },
+              "example": {
+                "errors": "An unknown error has occurred"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "description": "session cookie to provide authenticated access, provided via /login",
+        "name": "session",
+        "in": "cookie"
+      }
+    }
+  },
+  "security": [
+    {
+      "session": []
+    }
+  ],
+  "tags": [
+  ]
+}
