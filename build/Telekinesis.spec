@@ -1,18 +1,21 @@
 # -*- mode: python -*-
 
+import os
+docroot = os.path.dirname(os.getcwd())
+
 block_cipher = None
 
 
-a = Analysis(['/home/anton/Programming/Telekinesis/src/run.py'],
+a = Analysis([docroot + '/src/run.py'],
              pathex=[
-                '/home/anton/Programming/Telekinesis/env/lib/python3.6/site-packages',
+                docroot + '/env/lib/python3.6/site-packages',
              ],
              binaries=[],
              datas=[
-                ('../src/telekinesis/swaggerfile.json', 'telekinesis'),
-                ('../src/telekinesis/Gatekeeper/gatekeeper.sql', 'telekinesis/Gatekeeper'),
-                ('../src/telekinesis/models/script.sql', 'telekinesis/models'),
-                ('../src/telekinesis/models/create_db.sql', 'telekinesis/models'),
+                (docroot + '/src/telekinesis/swaggerfile.json', 'telekinesis'),
+                (docroot + '/src/telekinesis/Gatekeeper/gatekeeper.sql', 'telekinesis/Gatekeeper'),
+                (docroot + '/src/telekinesis/models/script.sql', 'telekinesis/models'),
+                (docroot + '/src/telekinesis/models/create_db.sql', 'telekinesis/models'),
              ],
              hiddenimports=[
                 'packaging.version', 
