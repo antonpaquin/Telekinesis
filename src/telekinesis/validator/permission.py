@@ -1,6 +1,15 @@
 from .utils import required
-from .user import _username_required
 from ..models import Permissions
+
+from .user import _username_required
+from copy import deepcopy
+
+
+# The standard username validator prevents the #script.public.[x] username, which is used for internal purposes, but for
+# deleting permissions on public users we have to allow that format of username for *only* permission.delete validation
+# Thus we strip the custom validator
+_username_required_allow_public = deepcopy(_username_required)
+del _username_required_allow_public['validator']
 
 
 def valid_permission(field, value, error):
@@ -53,8 +62,6 @@ permission_create = {
 }
 
 permission_delete = {
-    'username': _username_required,
+    'username': _username_required_allow_public,
     'permission': _permission_required,
 }
-
-
