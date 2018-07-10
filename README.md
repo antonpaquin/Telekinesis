@@ -13,7 +13,17 @@ This scenario would have been easier if I had been able to just hand him a URL, 
 
 # Setup
 ## Binary
-You can try the binaries at <editme>
+You can try the binaries [located here](https://github.com/antonpaquin/Telekinesis/releases/tag/1.0)
+
+For usage, see
+```
+./telekinesis -h
+```
+
+A simple setup running on port 8080 would be
+```
+./telekinesis -a admin -p mypassword --port 8080
+```
 
 ## From source
 (Requires python3, virtualenv)
@@ -99,10 +109,9 @@ curl -b $COOKIE -XPUT http://127.0.0.1:8080/user -d '{"username": "myfriend", "p
 ```
 (Sorry, password change endpoint is not written yet. Put an issue in this repo if you would like this feature)
 
-This default user can't do anything, so let's give him permission to create scripts, and to list all scripts
+This default user can't do anything, so let's give him the "script.create" permission
 ```
 curl -b $COOKIE -XPUT http://127.0.0.1:8080/permission -d '{"username": "myfriend", "permission": "script.create"}'
-curl -b $COOKIE -XPUT http://127.0.0.1:8080/permission -d '{"username": "myfriend", "permission": "scripts.read"}'
 ```
 Now he can create his own scripts, and he'll have full access to anything he creates.
 
