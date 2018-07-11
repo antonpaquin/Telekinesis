@@ -53,7 +53,19 @@ python run.py -a <admin username> -p <admin password> --port <what port to liste
 
 Warning: if you're running this on a public network, I *highly* recommend using https. Otherwise, any password or session token you send can be sniffed, and you might be exposing your computer to arbitrary remote shell access, which is a very bad thing.
 
-To protect your machine, you can run Telekinesis as an unprivileged user, 
+To protect your machine, you can run Telekinesis as an unprivileged user, or in a chroot jail, container, or virtual machine.
+
+### Binaries from source
+
+To build the binaries, we can use pyinstaller and the "/build/Telekinesis.spec" file
+
+First, setup the virtualenv and install requirements as above.
+
+Then, use pyinstaller to build the binary
+```
+cd build/
+pyinstaller Telekinesis.spec
+```
 
 # Usage
 
