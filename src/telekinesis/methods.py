@@ -139,10 +139,6 @@ def user_create(**jsn):
     logging.info('Entering user_create, creating new user {}'.format(jsn['username']))
     User.from_dict(jsn).store()
 
-    username = jsn['username']
-    password = jsn['password']
-    auth.create_user(username, password)
-
     logging.debug('User was created successfully')
     return '', 200
 
