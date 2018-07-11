@@ -66,6 +66,7 @@ Then, use pyinstaller to build the binary
 cd build/
 pyinstaller Telekinesis.spec
 ```
+The results will be put in "build/dist/run"
 
 # Usage
 
