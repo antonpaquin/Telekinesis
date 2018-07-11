@@ -137,7 +137,11 @@ def scripts_read():
 @authorized_by(Permissions.user.create)
 def user_create(**jsn):
     logging.info('Entering user_create, creating new user {}'.format(jsn['username']))
-    User.from_dict(jsn).store()
+
+    try:
+        User.from_dict(jsn).store()
+    except GatekeeperException as err:
+        return jsonify({'errors': str(err)}), 400
 
     logging.debug('User was created successfully')
     return '', 200
