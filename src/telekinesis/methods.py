@@ -182,7 +182,9 @@ def user_delete(username):
             'errors': 'Insufficient permission: requires permission {}'.format(Permissions.user.destroy)
         }), 401
 
-    return jsonify(User.get(username).as_dict()), 200
+    User.get(username).delete()
+
+    return '', 200
 
 
 @validated_by(validator.permission_create)
