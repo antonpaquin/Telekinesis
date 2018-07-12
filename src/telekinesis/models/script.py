@@ -71,7 +71,7 @@ class Script:
             'script_id': self.script_id,
             'script': self.script,
             'description': self.description,
-            'fork': self.fork,
+            'fork': bool(self.fork),
             'public_token': self.public_token,
         }
 
