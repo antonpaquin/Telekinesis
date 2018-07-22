@@ -13,7 +13,7 @@ This scenario would have been easier if I had been able to just hand him a URL, 
 
 # Setup
 ## Binary
-You can try the binaries [located here](https://github.com/antonpaquin/Telekinesis/releases/tag/1.0)
+You can try the binaries [located here](https://github.com/antonpaquin/Telekinesis/releases/tag/1.1)
 
 For usage, see
 ```
@@ -66,7 +66,7 @@ Then, use pyinstaller to build the binary
 cd build/
 pyinstaller Telekinesis.spec
 ```
-The results will be put in "build/dist/run"
+The results will be put in "build/dist/telekinesis"
 
 # Usage
 
