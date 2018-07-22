@@ -70,6 +70,34 @@ The results will be put in "build/dist/run"
 
 # Usage
 
+Valid options are:
+- -c, --config
+  - Allows the use of a config file to replace command line arguments. See an example [here](https://github.com/antonpaquin/Telekinesis/blob/master/src/telekinesis.conf.example)
+- -a, --admin, "admin" (required)
+  - The username of the default API admin account
+- -p, --password, "password" (required)
+  - The password of the default API admin account
+- --log-dir, "log_dir"
+  - Where to put the "telekinesis.log" log file. Defaults to the current directory.
+- --data-dir, "data_dir"
+  - Where to put database files for persistent storage. Defaults to the current directory.
+- --port, "port"
+  - What port to serve the API on. Defaults to 80
+- --ssh, "ssh"
+  - SSH into this target before executing scripts (see "Security")
+- "run_as_user" (config file only)
+  - Change into this user before executing scripts (see "Security")
+- "run_as_password" (config file only)
+  - Password for the "run_as_user" field
+  
+If any arguments are specified in a config file and in command line arguments, the command line arguments take priority.
+
+A simple example, without any security options and serving on port 8080, is
+```
+./telekinesis -a administrator -p correct_horse_battery_staple --port 8080
+```
+  
+# API
 Note: the "/" endpoint returns [this file](https://github.com/antonpaquin/Telekinesis/blob/master/src/telekinesis/swaggerfile.json) which can be pasted into [this editor](https://editor.swagger.io/) (or fetched with swagger-ui) to generate docs.
 
 ## Scripts
@@ -168,3 +196,55 @@ If you do not want this script to be publicly accessible, you can ignore the "pu
 curl -b $COOKIE -XDELETE http://127.0.0.1:8080/permission -d '{"username": "#script.public.[x]", "permission": "script.execute.[x]"}'
 curl -b $COOKIE -XDELETE http://127.0.0.1:8080/permission -d '{"username": "#script.public.[x]", "permission": "script.read.[x]"}'
 ```
+
+# Security
+
+If you run telekinesis with the default options, user scripts will be able to run anything that the user who starts the program can. This means they can do things like delete your home directory, or add a keylogger to your bashrc.
+
+If you keep "script.update" and "script.create" private, then you're safe. Otherwise, you should consider using one of the two available isolation methods to prevent user scripts from doing evil things.
+
+## User Isolation
+
+If "run_as_user" and "run_as_password" are set in a config file, telekinesis will change to that user before executing commands. You can take advantage of this to create an unprivileged user, who will not be able to damage the local machine.
+
+To create an unprivileged user "telekinesis", run
+```
+sudo useradd telekinesis
+sudo passwd telekinesis
+```
+
+Make sure the "other" system permissions are set to prevent access to private files
+```
+# Remove read permission from other users
+chmod o-r my_file
+# Remove write permission from other users
+chmod o-w my_file
+```
+Which will prevent those files from being read or changed by a telekinesis script.
+
+## SSH Isolation
+
+You can tell telekinesis to SSH into another machine before executing any scripts. This can be used to run commands on a local container or a remote machine where malicious users can do no harm, or to a different user on the local machine. 
+
+Any arguments you specify in the "ssh" parameter will be appended to
+```ssh -T```
+and run to generate a shell. You should use an identity file to enable passwordless login, and should also consider adding the host to your ssh config.
+
+An example SSH config might contain:
+```
+host telekinesis_executor
+  HostName 192.168.0.110
+  port 22
+  User telekinesis
+  IdentityFile ~/.ssh/my_ssh_.key
+```
+And the remote host should contain the public key in its "~/.ssh/authorized_keys" file.
+
+With this setup, specifying
+```
+{
+  ...
+  "ssh": "telekinesis_executor"
+}
+```
+would be sufficient to trigger commands on the remote machine.
