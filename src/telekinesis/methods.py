@@ -1,6 +1,5 @@
 from datetime import datetime
 import os
-import json
 import logging
 
 from flask import request, jsonify
@@ -12,7 +11,7 @@ from . import validator
 from .models import Script, User, Permissions
 from . import models
 from .utils import SqlConn
-from .executor import run_script
+from . import executor
 
 
 @validated_by(validator.script_create)
@@ -115,7 +114,7 @@ def script_execute(script_id):
         logging.warning('Searched for and found no script with id {}'.format(script_id))
         return jsonify({'errors': 'No such script {}'.format(script_id)}), 400
 
-    resp = run_script(script)
+    resp = executor.run_script(script)
     logging.debug('Script was run successfully')
 
     return jsonify(resp), 200
@@ -275,16 +274,28 @@ def directory():
     return swagger, 200, {'content-type': 'application/json'}
 
 
-def initialize(admin_username, admin_password, data_dir):
+def initialize(admin_username, admin_password, data_dir, security):
     global auth
 
     logging.info('Initializing database connection')
 
-    auth = Gatekeeper(os.path.join(data_dir, 'security.db'))
-    conn = SqlConn(os.path.join(data_dir, 'telekinesis.db'))
+    gatekeeper_db = os.path.join(data_dir, 'security.db')
+    auth = Gatekeeper(gatekeeper_db)
+    os.chmod(gatekeeper_db, 0o600)
+
+    telekinesis_db = os.path.join(data_dir, 'telekinesis.db')
+    conn = SqlConn(telekinesis_db)
+    os.chmod(telekinesis_db, 0o600)
 
     models.setup(auth=auth, conn=conn)
     attach_authorizer(auth)
+
+    executor.set_security(**security)
+    test = executor.run_script(Script(script="echo \"Hello world!\"", fork=False))
+    if test['stdout'] != 'Hello world!\n':
+        logging.critical('Telekinesis SSH test <echo "Hello world!"> failed, check your SSH config')
+        logging.error('Expecting stdout \"Hello world!\\n\", got response {}'.format(test))
+        exit(1)
 
     logging.info('Attempting to get administrator')
     if not auth.login(admin_username, admin_password):

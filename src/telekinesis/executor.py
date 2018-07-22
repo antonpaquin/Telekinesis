@@ -1,8 +1,28 @@
 import subprocess
 import os
 import base64
+import shlex
 
 from .models import Script
+
+
+security = {}
+
+
+def set_security(security_type, **kwargs):
+    global security
+
+    if security_type == 'none':
+        security['type'] = 'none'
+
+    elif security_type == 'user':
+        security['type'] = 'user'
+        security['username'] = kwargs['username']
+        security['password'] = kwargs['password']
+
+    elif security_type == 'ssh':
+        security['type'] = 'ssh'
+        security['ssh_args'] = shlex.split(kwargs['ssh_args'])
 
 
 def run_script(script_obj: Script):
@@ -11,14 +31,42 @@ def run_script(script_obj: Script):
 
     working_dir = os.getenv('HOME')
 
-    sp = subprocess.Popen(
-        args=script,
-        stdin=None,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        shell=True,
-        cwd=working_dir,
-    )
+    if security['type'] == 'none':
+        sp = subprocess.Popen(
+            args=script,
+            stdin=None,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            cwd=working_dir,
+        )
+
+    elif security['type'] == 'user':
+        sp = subprocess.Popen(
+            args=["su", security['username']],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            cwd=working_dir,
+        )
+        sp.stdin.write(security['password'].encode('utf-8'))
+        sp.stdin.write(bytes([10]))
+        sp.stdin.write(script.encode('utf-8'))
+
+    elif security['type'] == 'ssh':
+        sp = subprocess.Popen(
+            args=["ssh", "-T"] + security['ssh_args'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+            cwd=working_dir,
+        )
+        sp.stdin.write(script.encode('utf-8'))
+
+    else:
+        sp = None
 
     if fork:
         return {

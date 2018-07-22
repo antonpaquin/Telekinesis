@@ -1,0 +1,9 @@
+{
+    "admin": "administrator",
+    "password": "correct_horse_battery_staple",
+    "port": "8000",
+    "log_dir": ".",
+    "data_dir": ".",
+    "run_as_user": "untrusted_user",
+    "run_as_password": "untrusted_passwd"
+}
