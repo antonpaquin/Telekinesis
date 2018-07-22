@@ -281,13 +281,14 @@ def initialize(admin_username, admin_password, data_dir, security):
 
     gatekeeper_db = os.path.join(data_dir, 'security.db')
     auth = Gatekeeper(gatekeeper_db)
-    os.chmod(gatekeeper_db, 0o600)
 
     telekinesis_db = os.path.join(data_dir, 'telekinesis.db')
     conn = SqlConn(telekinesis_db)
-    os.chmod(telekinesis_db, 0o600)
 
     models.setup(auth=auth, conn=conn)
+    os.chmod(gatekeeper_db, 0o600)
+    os.chmod(telekinesis_db, 0o600)
+
     attach_authorizer(auth)
 
     executor.set_security(**security)
